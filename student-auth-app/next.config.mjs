@@ -7,11 +7,9 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  // Ensure images from external domains work
   images: {
     unoptimized: true,
   },
-  // Optimize for Vercel serverless
   experimental: {
     serverComponentsExternalPackages: ['nodemailer', 'bcryptjs'],
   },
