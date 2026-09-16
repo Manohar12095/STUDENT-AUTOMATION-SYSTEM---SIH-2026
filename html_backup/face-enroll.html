@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Face Enrollment — StudentAuth</title>
+  <meta name="description" content="Enroll your face for biometric authentication." />
+  <link rel="stylesheet" href="app/styles.css" />
+  <style>
+    .enroll-layout { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 32px 16px; }
+    .enroll-card { width: 100%; max-width: 580px; padding: 40px 36px; }
+    .model-loader { text-align: center; padding: 48px 24px; }
+    .loader-bar-wrap { height: 6px; background: var(--bg-elevated); border-radius: 99px; overflow: hidden; margin: 20px 0 10px; }
+    .loader-bar { height: 100%; background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent)); border-radius: 99px; transition: width 0.5s ease; }
+    .angle-instructions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+    .angle-btn { padding: 12px 14px; border-radius: var(--radius-md); background: var(--bg-elevated); border: 2px solid var(--border-default); text-align: left; cursor: pointer; transition: all var(--transition-fast); }
+    .angle-btn.active { border-color: var(--brand-primary); background: hsla(245,85%,60%,0.1); }
+    .angle-btn.done { border-color: var(--color-success); background: var(--color-success-muted); }
+    .angle-btn-label { font-size: 0.8rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .angle-btn-hint { font-size: 0.7rem; color: var(--text-muted); }
+    .capture-zone { position: relative; }
+    .quality-bar { display: flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: var(--radius-md); background: var(--bg-elevated); margin-bottom: 12px; font-size: 0.8rem; }
+    .quality-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    #camera-permission-denied { padding: 40px 20px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="enroll-layout">
+    <div class="enroll-card card animate-in">
+
+      <!-- Step: Loading models -->
+      <div id="phase-loading" class="model-loader">
+        <div style="font-size:3rem;margin-bottom:16px;">🤖</div>
+        <h2 class="heading-md mb-2">Preparing Face AI</h2>
+        <p class="text-muted text-sm mb-4" id="model-status-text">Initializing…</p>
+        <div class="loader-bar-wrap"><div class="loader-bar" id="model-loader-bar" style="width:5%;"></div></div>
+        <span class="text-muted text-xs" id="model-pct">5%</span>
+      </div>
+
+      <!-- Step: Camera permission -->
+      <div id="phase-permission" class="hidden">
+        <div class="text-center mb-6">
+          <div style="font-size:3rem;margin-bottom:16px;">📷</div>
+          <h2 class="heading-md mb-2">Camera Access Needed</h2>
+          <p class="text-secondary text-sm mb-5" style="max-width:400px;margin:0 auto 20px;">
+            To enroll your face we need access to your camera. Your video <strong>never leaves your device</strong> — only encrypted math vectors are stored.
+          </p>
+          <div class="consent-box text-left mb-5" style="max-width:420px;margin:0 auto;">
+            <h4>🛡️ During face capture we will:</h4>
+            <ul>
+              <li>Detect your face using on-device AI</li>
+              <li>Extract a 128-number mathematical vector</li>
+              <li>Immediately discard the raw video frame</li>
+              <li>Store only the encrypted vector, not your photo</li>
+            </ul>
+          </div>
+          <button class="btn btn-primary btn-lg" id="btn-allow-camera" onclick="startCamera()">Allow Camera Access →</button>
+          <div id="camera-permission-denied" class="hidden">
+            <div class="alert alert-danger mt-4">
+              <span>⚠️</span>
+              <div>Camera permission was denied. <a href="login.html" class="text-accent" style="text-decoration:none;">Use alternative verification instead</a> or enable camera in your browser settings and refresh.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step: Capture -->
+      <div id="phase-capture" class="hidden">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h2 class="heading-md" id="capture-angle-title">Front View</h2>
+            <p class="text-muted text-sm" id="capture-angle-hint">Look straight at the camera</p>
+          </div>
+          <span class="badge badge-primary" id="capture-badge">1 / 4</span>
+        </div>
+
+        <!-- Angle progress grid -->
+        <div class="angle-grid mb-4" id="angle-grid">
+          <div class="angle-thumb" id="thumb-front"><span style="font-size:1.25rem;">😐</span><span>Front</span></div>
+          <div class="angle-thumb" id="thumb-left"><span style="font-size:1.25rem;">👈</span><span>Left</span></div>
+          <div class="angle-thumb" id="thumb-right"><span style="font-size:1.25rem;">👉</span><span>Right</span></div>
+          <div class="angle-thumb" id="thumb-bottom"><span style="font-size:1.25rem;">👇</span><span>Bottom</span></div>
+        </div>
+
+        <!-- Quality indicator -->
+        <div class="quality-bar" id="quality-bar">
+          <div class="quality-dot" id="quality-dot" style="background:var(--color-warning);"></div>
+          <span id="quality-text">Detecting face…</span>
+        </div>
+
+        <!-- Camera -->
+        <div class="camera-container capture-zone" style="max-width:480px;aspect-ratio:4/3;">
+          <video id="enroll-video" class="camera-video" autoplay muted playsinline></video>
+          <canvas id="enroll-canvas" class="camera-canvas"></canvas>
+          <div class="camera-overlay">
+            <div class="face-guide-oval" id="face-oval"></div>
+          </div>
+          <div class="camera-status-bar">
+            <span class="badge badge-danger" style="font-size:0.65rem;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--color-danger);margin-right:4px;animation:recordBlink 1.5s infinite;"></span>LIVE</span>
+            <span id="capture-countdown-display" class="text-xs text-muted"></span>
+          </div>
+          <!-- Countdown overlay -->
+          <div id="capture-countdown-overlay" class="capture-countdown hidden"></div>
+        </div>
+
+        <div class="flex gap-3 mt-4">
+          <button class="btn btn-secondary" id="btn-retake" onclick="retakeAngle()" disabled>↺ Retake</button>
+          <button class="btn btn-primary flex-1" id="btn-capture" onclick="captureAngle()">📸 Capture</button>
+        </div>
+        <p class="text-muted text-xs text-center mt-3" id="capture-help-text">Position your face inside the oval and click Capture when the quality indicator turns green.</p>
+      </div>
+
+      <!-- Step: Processing -->
+      <div id="phase-processing" class="hidden text-center" style="padding:40px 0;">
+        <div class="spinner spinner-lg" style="margin:0 auto 20px;color:var(--brand-primary);"></div>
+        <h2 class="heading-md mb-2">Generating Embeddings</h2>
+        <p class="text-muted text-sm">Extracting secure mathematical vectors from your face captures…<br/>Raw images will be deleted immediately.</p>
+      </div>
+
+      <!-- Step: Complete -->
+      <div id="phase-complete" class="hidden text-center" style="padding:40px 0;">
+        <div style="font-size:4rem;margin-bottom:16px;animation:animateIn 0.5s ease;">✅</div>
+        <h2 class="heading-md mb-2">Face Enrolled!</h2>
+        <p class="text-secondary text-sm mb-6">Your face embeddings have been securely stored.<br/>Raw images have been discarded.</p>
+        <div class="angle-grid mb-6" id="complete-thumbnails" style="max-width:280px;margin:0 auto 24px;"></div>
+        <button class="btn btn-primary btn-lg" onclick="finishEnrollment()">Continue to Dashboard →</button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script src="app/app.js"></script>
+  <script src="app/face-utils.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const userId = params.get('userId');
+    if (!userId) navigate('register.html');
+
+    const ANGLES = [
+      { key: 'front',  label: 'Front View',  hint: 'Look straight at the camera',      emoji: '😐', thumbId: 'thumb-front' },
+      { key: 'left',   label: 'Left View',   hint: 'Slowly turn your head to the LEFT', emoji: '👈', thumbId: 'thumb-left' },
+      { key: 'right',  label: 'Right View',  hint: 'Slowly turn your head to the RIGHT',emoji: '👉', thumbId: 'thumb-right' },
+      { key: 'bottom', label: 'Bottom View', hint: 'Tilt your chin slightly DOWN',       emoji: '👇', thumbId: 'thumb-bottom' },
+    ];
+
+    let currentAngleIdx = 0;
+    let capturedFrames = {};   // { front: dataURL, left: ..., right: ..., bottom: ... }
+    let cameraStream = null;
+    let detectionLoop = null;
+    let lastDetection = null;
+    let faceQualityOk = false;
+    const videoEl = document.getElementById('enroll-video');
+    const canvasEl = document.getElementById('enroll-canvas');
+
+    // ── Phase helpers ──────────────────────────────────────────
+    function showPhase(id) {
+      ['phase-loading','phase-permission','phase-capture','phase-processing','phase-complete']
+        .forEach(p => document.getElementById(p).classList.add('hidden'));
+      document.getElementById(id).classList.remove('hidden');
+    }
+
+    // ── Load models → show permission request ──────────────────
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        await loadFaceModels((msg, pct) => {
+          document.getElementById('model-status-text').textContent = msg;
+          document.getElementById('model-loader-bar').style.width = pct + '%';
+          document.getElementById('model-pct').textContent = pct + '%';
+        });
+        showPhase('phase-permission');
+      } catch (err) {
+        document.getElementById('model-status-text').textContent = '❌ ' + err.message;
+        showToast('Model load failed', err.message, 'error', 8000);
+      }
+    });
+
+    // ── Start camera ───────────────────────────────────────────
+    async function startCamera() {
+      document.getElementById('btn-allow-camera').disabled = true;
+      document.getElementById('btn-allow-camera').innerHTML = '<span class="spinner"></span> Starting…';
+      const result = await requestCamera(videoEl);
+      if (!result.success) {
+        document.getElementById('btn-allow-camera').disabled = false;
+        document.getElementById('btn-allow-camera').innerHTML = 'Allow Camera Access →';
+        document.getElementById('camera-permission-denied').classList.remove('hidden');
+        showToast('Camera error', result.error, 'error', 8000);
+        return;
+      }
+      cameraStream = result.stream;
+      showPhase('phase-capture');
+      updateAngleUI();
+      startDetectionLoop();
+    }
+
+    // ── Detection loop ─────────────────────────────────────────
+    function startDetectionLoop() {
+      detectionLoop = setInterval(async () => {
+        if (!videoEl.readyState || videoEl.readyState < 2) return;
+        const det = await detectFace(videoEl);
+        lastDetection = det;
+        drawFaceOverlay(canvasEl, det, videoEl.videoWidth, videoEl.videoHeight);
+
+        const quality = checkFaceQuality(det, videoEl.videoWidth, videoEl.videoHeight);
+        faceQualityOk = quality.pass;
+
+        const dot = document.getElementById('quality-dot');
+        const txt = document.getElementById('quality-text');
+        const oval = document.getElementById('face-oval');
+
+        if (quality.pass) {
+          dot.style.background = 'var(--color-success)';
+          txt.textContent = '✓ ' + quality.reason;
+          oval.classList.add('face-detected');
+        } else {
+          dot.style.background = 'var(--color-warning)';
+          txt.textContent = quality.reason;
+          oval.classList.remove('face-detected');
+        }
+      }, 300);
+    }
+
+    // ── Update UI for current angle ────────────────────────────
+    function updateAngleUI() {
+      const angle = ANGLES[currentAngleIdx];
+      document.getElementById('capture-angle-title').textContent = angle.label;
+      document.getElementById('capture-angle-hint').textContent = angle.hint;
+      document.getElementById('capture-badge').textContent = `${currentAngleIdx + 1} / 4`;
+      document.getElementById('btn-retake').disabled = !capturedFrames[angle.key];
+    }
+
+    // ── Capture angle ──────────────────────────────────────────
+    async function captureAngle() {
+      if (!faceQualityOk) {
+        showToast('Face not ready', document.getElementById('quality-text').textContent, 'warning');
+        return;
+      }
+
+      // Countdown 3-2-1
+      const btn = document.getElementById('btn-capture');
+      btn.disabled = true;
+      const countdownEl = document.getElementById('capture-countdown-overlay');
+      for (let i = 3; i >= 1; i--) {
+        countdownEl.textContent = i;
+        countdownEl.classList.remove('hidden');
+        await new Promise(r => setTimeout(r, 900));
+      }
+      countdownEl.classList.add('hidden');
+
+      // Take snapshot
+      const dataURL = captureFrame(videoEl);
+      const angle = ANGLES[currentAngleIdx];
+      capturedFrames[angle.key] = dataURL;
+
+      // Update thumbnail
+      const thumb = document.getElementById(angle.thumbId);
+      thumb.innerHTML = `<img src="${dataURL}" alt="${angle.label}" /><div class="check-overlay">✅</div>`;
+      thumb.classList.add('captured');
+
+      btn.disabled = false;
+      document.getElementById('btn-retake').disabled = false;
+
+      showToast(`${angle.label} captured!`, 'Great shot. Moving to next angle.', 'success', 2000);
+
+      // Auto-advance
+      if (currentAngleIdx < ANGLES.length - 1) {
+        currentAngleIdx++;
+        updateAngleUI();
+      } else {
+        // All 4 captured → process
+        clearInterval(detectionLoop);
+        stopCamera(cameraStream);
+        await processEmbeddings();
+      }
+    }
+
+    // ── Retake ─────────────────────────────────────────────────
+    function retakeAngle() {
+      const angle = ANGLES[currentAngleIdx];
+      delete capturedFrames[angle.key];
+      const thumb = document.getElementById(angle.thumbId);
+      thumb.innerHTML = `<span style="font-size:1.25rem;">${angle.emoji}</span><span>${angle.label.split(' ')[0]}</span>`;
+      thumb.classList.remove('captured');
+      document.getElementById('btn-retake').disabled = true;
+      showToast('Ready to retake', 'Position your face and capture again.', 'info', 2500);
+    }
+
+    // ── Process embeddings ─────────────────────────────────────
+    async function processEmbeddings() {
+      showPhase('phase-processing');
+      try {
+        const embeddings = {};
+        for (const angle of ANGLES) {
+          const embedding = await extractEmbeddingFromDataURL(capturedFrames[angle.key]);
+          if (!embedding) throw new Error(`Could not extract embedding for ${angle.label}. Please try again.`);
+          embeddings[`embedding${angle.key.charAt(0).toUpperCase() + angle.key.slice(1)}`] = embedding;
+          // Discard raw frame
+          delete capturedFrames[angle.key];
+        }
+
+        // Store embeddings
+        UserStore.storeFaceEmbeddings(userId, embeddings);
+        UserStore.update(userId, { accountStatus: 'active' });
+
+        // Create session and redirect
+        SessionStore.create(userId);
+        LoginHistory.add(userId, 'face_enrollment_complete');
+
+        showCompletePage();
+      } catch (err) {
+        showToast('Embedding failed', err.message, 'error', 8000);
+        // Restart capture
+        capturedFrames = {};
+        currentAngleIdx = 0;
+        ANGLES.forEach(a => {
+          const t = document.getElementById(a.thumbId);
+          t.innerHTML = `<span style="font-size:1.25rem;">${a.emoji}</span><span>${a.label.split(' ')[0]}</span>`;
+          t.classList.remove('captured');
+        });
+        const res = await requestCamera(videoEl);
+        if (res.success) { cameraStream = res.stream; startDetectionLoop(); }
+        showPhase('phase-capture');
+        updateAngleUI();
+      }
+    }
+
+    function showCompletePage() {
+      showPhase('phase-complete');
+    }
+
+    function finishEnrollment() {
+      navigate('dashboard.html');
+    }
+  </script>
+</body>
+</html>

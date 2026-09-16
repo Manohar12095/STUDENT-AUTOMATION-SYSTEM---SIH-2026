@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sign In — StudentAuth</title>
+  <meta name="description" content="Sign in to your StudentAuth account with face verification." />
+  <link rel="stylesheet" href="app/styles.css" />
+  <style>
+    .login-layout { display: grid; grid-template-columns: 1.2fr 1fr; min-height: 100vh; }
+    .login-hero { background: linear-gradient(160deg, hsla(245,85%,18%,0.7) 0%, hsla(185,100%,12%,0.5) 100%); border-right: 1px solid var(--border-subtle); padding: 60px 48px; display: flex; flex-direction: column; justify-content: center; }
+    .login-hero-visual { margin-top: 40px; position: relative; }
+    .login-main { padding: 40px; display: flex; flex-direction: column; justify-content: center; overflow-y: auto; max-height: 100vh; }
+    .login-section { display: none; animation: animateIn 0.4s ease both; }
+    .login-section.active { display: block; }
+    .face-verify-status { padding: 16px; border-radius: var(--radius-lg); text-align: center; }
+    .match-score-ring { width: 100px; height: 100px; position: relative; margin: 0 auto 16px; }
+    .match-ring-svg { transform: rotate(-90deg); }
+    .match-ring-track { fill: none; stroke: var(--border-default); stroke-width: 6; }
+    .match-ring-bar { fill: none; stroke-width: 6; stroke-linecap: round; stroke-dasharray: 283; transition: stroke-dashoffset 1s ease, stroke 0.5s; }
+    .match-ring-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .security-notice { padding: 12px 14px; border-radius: var(--radius-md); background: hsla(38,95%,55%,0.08); border: 1px solid hsla(38,95%,55%,0.2); font-size: 0.8rem; color: hsl(38,90%,75%); }
+    @media (max-width: 800px) { .login-layout { grid-template-columns: 1fr; } .login-hero { display: none; } .login-main { max-height: none; padding: 28px 20px; } }
+  </style>
+</head>
+<body>
+  <div class="login-layout">
+    <!-- Hero Side -->
+    <aside class="login-hero">
+      <a href="index.html" class="navbar-brand" style="display:flex;align-items:center;gap:10px;text-decoration:none;margin-bottom:40px;">
+        <div class="brand-logo">🎓</div>
+        <span class="brand-name">Student<span>Auth</span></span>
+      </a>
+      <h1 class="heading-xl mb-3">Welcome back</h1>
+      <p class="text-secondary" style="max-width:380px;line-height:1.7;">Your identity is protected by three layers of security: password, facial recognition, and one-time passwords.</p>
+      <div class="login-hero-visual">
+        <div class="card-glass" style="padding:20px;border-radius:16px;max-width:360px;">
+          <div class="flex items-center gap-3 mb-4">
+            <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--brand-primary),var(--brand-accent));display:flex;align-items:center;justify-content:center;font-size:1.2rem;">👤</div>
+            <div>
+              <div class="font-semibold text-sm">Priya Sharma</div>
+              <div class="text-muted text-xs">priya@example.com</div>
+            </div>
+          </div>
+          <div class="flex flex-col gap-2">
+            <div class="flex items-center gap-3 p-3" style="background:var(--bg-elevated);border-radius:10px;">
+              <span style="font-size:1rem;">🔑</span>
+              <div class="flex-1">
+                <div class="text-xs font-semibold mb-1">Password</div>
+                <div style="height:3px;background:var(--color-success);border-radius:99px;"></div>
+              </div>
+              <span class="badge badge-success" style="font-size:0.65rem;">✓</span>
+            </div>
+            <div class="flex items-center gap-3 p-3" style="background:var(--bg-elevated);border-radius:10px;">
+              <span style="font-size:1rem;">📷</span>
+              <div class="flex-1">
+                <div class="text-xs font-semibold mb-1">Face Match</div>
+                <div style="height:3px;background:var(--color-success);border-radius:99px;"></div>
+              </div>
+              <span class="badge badge-success" style="font-size:0.65rem;">94%</span>
+            </div>
+            <div class="flex items-center gap-3 p-3" style="background:var(--bg-elevated);border-radius:10px;">
+              <span style="font-size:1rem;">✉️</span>
+              <div class="flex-1">
+                <div class="text-xs font-semibold mb-1">OTP Verification</div>
+                <div style="height:3px;background:var(--brand-primary);border-radius:99px;width:60%;animation:expand 2s ease-in-out infinite alternate;"></div>
+              </div>
+              <span class="badge badge-warning" style="font-size:0.65rem;">Pending</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main login form -->
+    <main class="login-main">
+      <div style="max-width:420px;width:100%;margin:0 auto;">
+
+        <!-- Step 1: Credentials -->
+        <div class="login-section active" id="login-step-1">
+          <h2 class="heading-md mb-1">Sign in</h2>
+          <p class="text-muted text-sm mb-6">Step 1 of 3 — Enter your credentials</p>
+          <div class="flex flex-col gap-4">
+            <div class="form-group">
+              <label class="form-label required" for="login-email">Email Address</label>
+              <div class="form-input-wrapper">
+                <span class="input-icon">✉️</span>
+                <input type="email" id="login-email" class="form-input" placeholder="you@example.com" autocomplete="email" />
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="flex items-center justify-between mb-1">
+                <label class="form-label required" for="login-password" style="margin:0;">Password</label>
+                <a href="forgot-password.html" class="text-xs text-accent" style="text-decoration:none;">Forgot password?</a>
+              </div>
+              <div class="form-input-wrapper">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="login-password" class="form-input" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter') validateCredentials()" />
+                <button type="button" class="input-action" onclick="togglePasswordVis('login-password',this)">👁️</button>
+              </div>
+            </div>
+          </div>
+          <div id="login-error-1" class="alert alert-danger mt-4 hidden"></div>
+          <div id="login-lockout" class="alert alert-danger mt-4 hidden"></div>
+          <button class="btn btn-primary btn-full mt-5" id="btn-login-step1" onclick="validateCredentials()">Continue →</button>
+          <div class="divider mt-5 mb-4">or</div>
+          <div class="text-center text-sm text-muted">Don't have an account? <a href="register.html" class="text-accent" style="text-decoration:none;">Create one</a></div>
+        </div>
+
+        <!-- Step 2: Face Verification -->
+        <div class="login-section" id="login-step-2">
+          <h2 class="heading-md mb-1">Face Verification</h2>
+          <p class="text-muted text-sm mb-5">Step 2 of 3 — Look at the camera to verify it's you</p>
+
+          <div id="face-loading-models" class="text-center mb-4">
+            <span class="spinner" style="color:var(--brand-primary);"></span>
+            <span class="text-muted text-sm ml-2">Loading face AI…</span>
+          </div>
+
+          <div id="face-verify-camera" class="hidden">
+            <div class="quality-bar flex items-center gap-2 mb-3" id="login-quality-bar" style="padding:8px 12px;border-radius:var(--radius-md);background:var(--bg-elevated);font-size:0.8rem;">
+              <div id="login-quality-dot" style="width:8px;height:8px;border-radius:50%;background:var(--color-warning);flex-shrink:0;"></div>
+              <span id="login-quality-text">Detecting face…</span>
+            </div>
+            <div class="camera-container" style="max-width:100%;aspect-ratio:4/3;margin-bottom:16px;">
+              <video id="login-video" class="camera-video" autoplay muted playsinline></video>
+              <canvas id="login-canvas" class="camera-canvas"></canvas>
+              <div class="camera-overlay">
+                <div class="face-guide-oval" id="login-oval"></div>
+              </div>
+              <div class="camera-status-bar">
+                <span class="badge badge-danger" style="font-size:0.65rem;"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--color-danger);margin-right:4px;animation:recordBlink 1.5s infinite;"></span>SCANNING</span>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-full" id="btn-face-verify" onclick="verifyFace()">📸 Verify My Face</button>
+          </div>
+
+          <!-- Face result -->
+          <div id="face-result" class="hidden">
+            <div class="face-verify-status" id="face-status-box">
+              <div class="match-score-ring">
+                <svg class="match-ring-svg" width="100" height="100" viewBox="0 0 100 100">
+                  <circle class="match-ring-track" cx="50" cy="50" r="45" />
+                  <circle class="match-ring-bar" id="match-ring-bar" cx="50" cy="50" r="45" stroke-dashoffset="283" />
+                </svg>
+                <div class="match-ring-label">
+                  <span id="match-pct-label" class="font-bold" style="font-size:1.3rem;">0%</span>
+                  <span class="text-xs text-muted">match</span>
+                </div>
+              </div>
+              <div id="face-status-msg" class="font-semibold mb-2"></div>
+              <div id="face-status-sub" class="text-sm text-muted"></div>
+            </div>
+            <div class="flex gap-3 mt-4">
+              <button class="btn btn-secondary flex-1" id="btn-face-retry" onclick="retryFaceVerify()">↺ Try Again</button>
+              <button class="btn btn-primary flex-1 hidden" id="btn-face-continue" onclick="proceedAfterFace()">Continue →</button>
+            </div>
+            <div class="mt-4 hidden" id="fallback-link">
+              <div class="security-notice">⚠️ Having trouble with face verification? <a href="#" onclick="skipToOTP()" class="text-accent" style="text-decoration:none;">Use OTP-only login</a> instead.</div>
+            </div>
+          </div>
+
+          <div id="login-camera-error" class="alert alert-danger mt-4 hidden"></div>
+          <button class="btn btn-ghost btn-sm mt-4" onclick="backToCredentials()">← Back</button>
+        </div>
+
+        <!-- Step 3: OTP triggered from here -->
+        <div class="login-section" id="login-step-3">
+          <div class="text-center" style="padding:40px 0;">
+            <div class="spinner spinner-lg" style="margin:0 auto 20px;color:var(--brand-primary);"></div>
+            <h2 class="heading-md mb-2">Sending OTP…</h2>
+            <p class="text-muted text-sm">Almost there! Redirecting to email verification.</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
+  <script src="app/app.js"></script>
+  <script src="app/face-utils.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => { redirectIfAuthed(); });
+
+    let loginUser = null;
+    let loginStream = null;
+    let loginDetectionLoop = null;
+    let loginFaceQualityOk = false;
+    let faceAttempts = 0;
+    const MAX_FACE_ATTEMPTS = 3;
+
+    function showLoginSection(id) {
+      ['login-step-1','login-step-2','login-step-3'].forEach(s => document.getElementById(s).classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function togglePasswordVis(id, btn) {
+      const f = document.getElementById(id);
+      f.type = f.type === 'password' ? 'text' : 'password';
+      btn.textContent = f.type === 'password' ? '👁️' : '🙈';
+    }
+
+    // ── Step 1: Validate credentials ──────────────────────────
+    async function validateCredentials() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errEl = document.getElementById('login-error-1');
+      errEl.classList.add('hidden');
+
+      if (!email || !password) { errEl.textContent = '⚠ Please enter your email and password.'; errEl.classList.remove('hidden'); return; }
+
+      setButtonLoading('btn-login-step1', true, 'Checking…');
+
+      const user = UserStore.getByEmail(email);
+
+      // Lockout check
+      if (user && user.lockedUntil && Date.now() < user.lockedUntil) {
+        const mins = Math.ceil((user.lockedUntil - Date.now()) / 60000);
+        document.getElementById('login-lockout').textContent = `⚠ Account locked due to too many failed attempts. Try again in ${mins} minute(s).`;
+        document.getElementById('login-lockout').classList.remove('hidden');
+        setButtonLoading('btn-login-step1', false, 'Continue →');
+        return;
+      }
+
+      if (!user) {
+        await new Promise(r => setTimeout(r, 600)); // timing attack prevention
+        errEl.textContent = '⚠ Invalid email or password.';
+        errEl.classList.remove('hidden');
+        setButtonLoading('btn-login-step1', false, 'Continue →');
+        LoginHistory.add('unknown', 'failed_password', { email });
+        return;
+      }
+
+      const passwordOk = await verifyPassword(password, user.passwordHash);
+      if (!passwordOk) {
+        const attempts = (user.failedLoginAttempts || 0) + 1;
+        const updates = { failedLoginAttempts: attempts };
+        if (attempts >= MAX_LOGIN_ATTEMPTS) updates.lockedUntil = Date.now() + LOCKOUT_DURATION_MS;
+        UserStore.update(user.id, updates);
+        LoginHistory.add(user.id, 'failed_password');
+
+        const remaining = MAX_LOGIN_ATTEMPTS - attempts;
+        errEl.textContent = `⚠ Invalid email or password.${remaining > 0 ? ` ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.` : ' Account locked for 15 minutes.'}`;
+        errEl.classList.remove('hidden');
+        setButtonLoading('btn-login-step1', false, 'Continue →');
+        return;
+      }
+
+      if (!user.emailVerified) {
+        errEl.textContent = '⚠ Please verify your email before signing in.';
+        errEl.classList.remove('hidden');
+        setButtonLoading('btn-login-step1', false, 'Continue →');
+        return;
+      }
+
+      // Reset failed attempts
+      UserStore.update(user.id, { failedLoginAttempts: 0, lockedUntil: null });
+      loginUser = user;
+
+      // Check if face credentials enrolled
+      if (!user.faceCredentials) {
+        // Skip face verification, go directly to OTP
+        proceedToOTP();
+        return;
+      }
+
+      // Proceed to face verification
+      setButtonLoading('btn-login-step1', false, 'Continue →');
+      showLoginSection('login-step-2');
+      startFaceVerification();
+    }
+
+    // ── Step 2: Face Verification ──────────────────────────────
+    async function startFaceVerification() {
+      try {
+        await loadFaceModels();
+        document.getElementById('face-loading-models').classList.add('hidden');
+        document.getElementById('face-verify-camera').classList.remove('hidden');
+
+        const result = await requestCamera(document.getElementById('login-video'));
+        if (!result.success) {
+          document.getElementById('login-camera-error').textContent = '⚠ ' + result.error;
+          document.getElementById('login-camera-error').classList.remove('hidden');
+          document.getElementById('fallback-link').classList.remove('hidden');
+          return;
+        }
+        loginStream = result.stream;
+        startLoginDetectionLoop();
+      } catch (err) {
+        showToast('Error', err.message, 'error');
+      }
+    }
+
+    function startLoginDetectionLoop() {
+      const videoEl = document.getElementById('login-video');
+      const canvasEl = document.getElementById('login-canvas');
+      loginDetectionLoop = setInterval(async () => {
+        if (!videoEl.readyState || videoEl.readyState < 2) return;
+        const det = await detectFace(videoEl);
+        drawFaceOverlay(canvasEl, det, videoEl.videoWidth, videoEl.videoHeight);
+        const q = checkFaceQuality(det, videoEl.videoWidth, videoEl.videoHeight);
+        loginFaceQualityOk = q.pass;
+        document.getElementById('login-quality-dot').style.background = q.pass ? 'var(--color-success)' : 'var(--color-warning)';
+        document.getElementById('login-quality-text').textContent = q.pass ? '✓ ' + q.reason : q.reason;
+        document.getElementById('login-oval').classList.toggle('face-detected', q.pass);
+      }, 300);
+    }
+
+    async function verifyFace() {
+      if (!loginFaceQualityOk) { showToast('Not ready', 'Position your face properly first.', 'warning'); return; }
+      setButtonLoading('btn-face-verify', true, 'Analyzing…');
+      clearInterval(loginDetectionLoop);
+
+      const videoEl = document.getElementById('login-video');
+      const embedding = await extractEmbedding(videoEl);
+      stopCamera(loginStream);
+
+      document.getElementById('face-verify-camera').classList.add('hidden');
+      document.getElementById('face-result').classList.remove('hidden');
+
+      if (!embedding) {
+        showFaceResult(false, 0);
+        faceAttempts++;
+        return;
+      }
+
+      const result = matchFaceEmbedding(embedding, loginUser.faceCredentials);
+      showFaceResult(result.match, result.percentage);
+      if (!result.match) {
+        faceAttempts++;
+        LoginHistory.add(loginUser.id, 'failed_face', { score: result.score });
+      }
+    }
+
+    function showFaceResult(match, pct) {
+      const bar = document.getElementById('match-ring-bar');
+      const pctEl = document.getElementById('match-pct-label');
+      const msgEl = document.getElementById('face-status-msg');
+      const subEl = document.getElementById('face-status-sub');
+      const statusBox = document.getElementById('face-status-box');
+      const continueBtn = document.getElementById('btn-face-continue');
+      const fallback = document.getElementById('fallback-link');
+
+      // Animate ring
+      const circumference = 283;
+      const offset = circumference - (circumference * pct / 100);
+      bar.style.strokeDashoffset = offset;
+      bar.style.stroke = match ? 'var(--color-success)' : pct > 40 ? 'var(--color-warning)' : 'var(--color-danger)';
+
+      let displayed = 0;
+      const interval = setInterval(() => { displayed = Math.min(displayed + 2, pct); pctEl.textContent = displayed + '%'; if (displayed >= pct) clearInterval(interval); }, 20);
+
+      if (match) {
+        statusBox.style.background = 'var(--color-success-muted)';
+        statusBox.style.border = '1px solid hsla(142,76%,46%,0.3)';
+        msgEl.textContent = '✅ Face Verified!';
+        subEl.textContent = `Match confidence: ${pct}% — above the ${Math.round(FACE_MATCH_THRESHOLD * 100)}% threshold`;
+        continueBtn.classList.remove('hidden');
+      } else {
+        statusBox.style.background = 'var(--color-danger-muted)';
+        statusBox.style.border = '1px solid hsla(0,84%,60%,0.3)';
+        msgEl.textContent = '❌ Face Not Matched';
+        subEl.textContent = `Match score: ${pct}% — below the required ${Math.round(FACE_MATCH_THRESHOLD * 100)}% threshold`;
+        if (faceAttempts >= MAX_FACE_ATTEMPTS) fallback.classList.remove('hidden');
+      }
+    }
+
+    function retryFaceVerify() {
+      document.getElementById('face-result').classList.add('hidden');
+      document.getElementById('face-verify-camera').classList.remove('hidden');
+      document.getElementById('face-loading-models').classList.add('hidden');
+      document.getElementById('btn-face-verify').disabled = false;
+      document.getElementById('btn-face-verify').innerHTML = '📸 Verify My Face';
+      requestCamera(document.getElementById('login-video')).then(res => {
+        if (res.success) { loginStream = res.stream; startLoginDetectionLoop(); }
+      });
+    }
+
+    function backToCredentials() { stopCamera(loginStream); clearInterval(loginDetectionLoop); showLoginSection('login-step-1'); }
+
+    function proceedAfterFace() { proceedToOTP(); }
+    function skipToOTP() { proceedToOTP(); }
+
+    // ── Step 3: Send OTP & redirect ────────────────────────────
+    async function proceedToOTP() {
+      showLoginSection('login-step-3');
+      PendingVerification.save({ userId: loginUser.id, email: loginUser.email });
+      const otp = await OTPStore.create(loginUser.id, 'login');
+      simulateSendOTPEmail(loginUser.email, otp, 'login');
+      setTimeout(() => {
+        navigate(`otp.html?purpose=login&userId=${loginUser.id}&email=${encodeURIComponent(loginUser.email)}`);
+      }, 1000);
+    }
+  </script>
+</body>
+</html>

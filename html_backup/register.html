@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Register — StudentAuth</title>
+  <meta name="description" content="Create your StudentAuth account with biometric face enrollment." />
+  <link rel="stylesheet" href="app/styles.css" />
+  <style>
+    .register-layout { display: grid; grid-template-columns: 1fr 1.3fr; min-height: 100vh; }
+    .register-sidebar { background: linear-gradient(160deg, hsla(245,85%,25%,0.5) 0%, hsla(185,100%,20%,0.3) 100%); border-right: 1px solid var(--border-subtle); padding: 48px 40px; display: flex; flex-direction: column; justify-content: space-between; }
+    .sidebar-features { list-style: none; display: flex; flex-direction: column; gap: 18px; margin-top: 40px; }
+    .sidebar-feature { display: flex; align-items: flex-start; gap: 12px; }
+    .sidebar-feature-icon { width: 36px; height: 36px; border-radius: 8px; background: hsla(245,85%,60%,0.15); border: 1px solid hsla(245,85%,60%,0.2); display: flex; align-items: center; justify-content: center; font-size: 1rem; flex-shrink: 0; }
+    .register-main { padding: 40px; display: flex; flex-direction: column; justify-content: center; max-height: 100vh; overflow-y: auto; }
+    .form-section { display: none; animation: animateIn 0.4s ease both; }
+    .form-section.active { display: block; }
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .language-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+    .lang-chip { padding: 6px 14px; border-radius: var(--radius-full); border: 1.5px solid var(--border-default); background: var(--bg-elevated); color: var(--text-secondary); font-size: 0.8125rem; cursor: pointer; transition: all var(--transition-fast); user-select: none; }
+    .lang-chip.selected { border-color: var(--brand-primary); background: hsla(245,85%,60%,0.12); color: var(--brand-primary-light); }
+    @media (max-width: 860px) { .register-layout { grid-template-columns: 1fr; } .register-sidebar { display: none; } .register-main { padding: 28px 20px; max-height: none; } .input-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="register-layout">
+    <!-- Sidebar -->
+    <aside class="register-sidebar">
+      <div>
+        <a href="index.html" class="navbar-brand" style="text-decoration:none;display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+          <div class="brand-logo">🎓</div>
+          <span class="brand-name">Student<span>Auth</span></span>
+        </a>
+        <h2 class="heading-lg mt-6" style="line-height:1.3;">Create your secure student account</h2>
+        <p class="text-secondary mt-3 text-sm">Your biometric data stays on-device. Only encrypted embeddings are stored.</p>
+        <ul class="sidebar-features">
+          <li class="sidebar-feature"><div class="sidebar-feature-icon">🤖</div><div><div class="font-semibold text-sm mb-1">AI Face Enrollment</div><div class="text-muted text-xs">4-angle guided capture with quality checks</div></div></li>
+          <li class="sidebar-feature"><div class="sidebar-feature-icon">🔐</div><div><div class="font-semibold text-sm mb-1">Encrypted Storage</div><div class="text-muted text-xs">128D vectors only — no raw images saved</div></div></li>
+          <li class="sidebar-feature"><div class="sidebar-feature-icon">✉️</div><div><div class="font-semibold text-sm mb-1">Email Verification</div><div class="text-muted text-xs">OTP confirms your identity before activation</div></div></li>
+          <li class="sidebar-feature"><div class="sidebar-feature-icon">🛡️</div><div><div class="font-semibold text-sm mb-1">Your Data, Your Control</div><div class="text-muted text-xs">Delete your biometrics anytime from Settings</div></div></li>
+        </ul>
+      </div>
+      <div class="text-muted text-xs mt-5">Already have an account? <a href="login.html" class="text-accent" style="text-decoration:none;">Sign in</a></div>
+    </aside>
+
+    <!-- Main Form -->
+    <main class="register-main">
+      <div style="max-width:520px;width:100%;margin:0 auto;">
+        <!-- Progress -->
+        <div class="step-progress mb-8" id="step-progress">
+          <div class="step-item active" id="step-ind-1"><div class="step-circle">1</div><div class="step-label">Profile</div></div>
+          <div class="step-item" id="step-ind-2"><div class="step-circle">2</div><div class="step-label">Academic</div></div>
+          <div class="step-item" id="step-ind-3"><div class="step-circle">3</div><div class="step-label">Security</div></div>
+          <div class="step-item" id="step-ind-4"><div class="step-circle">4</div><div class="step-label">Consent</div></div>
+        </div>
+
+        <!-- Step 1: Personal Info -->
+        <div class="form-section active" id="step-1">
+          <h2 class="heading-md mb-1">Personal Information</h2>
+          <p class="text-muted text-sm mb-6">Step 1 of 4 — Tell us about yourself</p>
+          <div class="flex flex-col gap-4">
+            <div class="form-group">
+              <label class="form-label required" for="reg-name">Full Name</label>
+              <div class="form-input-wrapper">
+                <span class="input-icon">👤</span>
+                <input type="text" id="reg-name" class="form-input" placeholder="e.g. Priya Sharma" autocomplete="name" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="reg-email">Email Address</label>
+              <div class="form-input-wrapper">
+                <span class="input-icon">✉️</span>
+                <input type="email" id="reg-email" class="form-input" placeholder="you@example.com" autocomplete="email" />
+              </div>
+              <span class="form-hint">Your OTP will be sent here</span>
+            </div>
+            <div class="input-grid">
+              <div class="form-group">
+                <label class="form-label required" for="reg-dob">Date of Birth</label>
+                <input type="date" id="reg-dob" class="form-input" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="reg-age">Age</label>
+                <input type="number" id="reg-age" class="form-input" placeholder="Auto-calculated" readonly style="cursor:default;" />
+              </div>
+            </div>
+            <div class="input-grid">
+              <div class="form-group">
+                <label class="form-label required" for="reg-phone">Phone Number</label>
+                <input type="tel" id="reg-phone" class="form-input" placeholder="+91 98765 43210" autocomplete="tel" />
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="reg-gender">Gender</label>
+                <select id="reg-gender" class="form-input form-select">
+                  <option value="">Prefer not to say</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="nonbinary">Non-binary</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="reg-address">Address / Location</label>
+              <input type="text" id="reg-address" class="form-input" placeholder="City, State, Country" />
+            </div>
+          </div>
+          <button class="btn btn-primary btn-full mt-6" id="btn-step1-next" onclick="validateStep1()">Continue →</button>
+        </div>
+
+        <!-- Step 2: Academic Info -->
+        <div class="form-section" id="step-2">
+          <h2 class="heading-md mb-1">Academic Details</h2>
+          <p class="text-muted text-sm mb-6">Step 2 of 4 — Your institution details</p>
+          <div class="flex flex-col gap-4">
+            <div class="form-group">
+              <label class="form-label required" for="reg-institution">Institution / College Name</label>
+              <div class="form-input-wrapper">
+                <span class="input-icon">🏫</span>
+                <input type="text" id="reg-institution" class="form-input" placeholder="e.g. IIT Madras" />
+              </div>
+            </div>
+            <div class="input-grid">
+              <div class="form-group">
+                <label class="form-label required" for="reg-department">Department</label>
+                <input type="text" id="reg-department" class="form-input" placeholder="e.g. Computer Science" />
+              </div>
+              <div class="form-group">
+                <label class="form-label required" for="reg-roll">Roll / Register No.</label>
+                <input type="text" id="reg-roll" class="form-input" placeholder="e.g. 2024CS001" />
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Preferred Languages</label>
+              <div class="language-chips" id="lang-chips">
+                <div class="lang-chip selected" data-lang="English" onclick="toggleLang(this)">English</div>
+                <div class="lang-chip" data-lang="Tamil" onclick="toggleLang(this)">Tamil</div>
+                <div class="lang-chip" data-lang="Hindi" onclick="toggleLang(this)">Hindi</div>
+                <div class="lang-chip" data-lang="Telugu" onclick="toggleLang(this)">Telugu</div>
+                <div class="lang-chip" data-lang="Kannada" onclick="toggleLang(this)">Kannada</div>
+                <div class="lang-chip" data-lang="Malayalam" onclick="toggleLang(this)">Malayalam</div>
+                <div class="lang-chip" data-lang="Bengali" onclick="toggleLang(this)">Bengali</div>
+                <div class="lang-chip" data-lang="Marathi" onclick="toggleLang(this)">Marathi</div>
+              </div>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button class="btn btn-secondary" onclick="goToStep(1)">← Back</button>
+            <button class="btn btn-primary flex-1" id="btn-step2-next" onclick="validateStep2()">Continue →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Password -->
+        <div class="form-section" id="step-3">
+          <h2 class="heading-md mb-1">Set Your Password</h2>
+          <p class="text-muted text-sm mb-6">Step 3 of 4 — Secure your account</p>
+          <div class="flex flex-col gap-4">
+            <div class="form-group">
+              <label class="form-label required" for="reg-password">Password</label>
+              <div class="form-input-wrapper">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="reg-password" class="form-input" placeholder="Minimum 8 characters" autocomplete="new-password" oninput="onPasswordInput(this.value)" />
+                <button type="button" class="input-action" onclick="togglePasswordVis('reg-password', this)">👁️</button>
+              </div>
+              <div class="strength-meter"><div class="strength-bar" id="pwd-strength-bar" style="width:0;"></div></div>
+              <span class="strength-text" id="pwd-strength-text"></span>
+            </div>
+            <div class="form-group">
+              <label class="form-label required" for="reg-password-confirm">Confirm Password</label>
+              <div class="form-input-wrapper">
+                <span class="input-icon">🔒</span>
+                <input type="password" id="reg-password-confirm" class="form-input" placeholder="Repeat your password" autocomplete="new-password" />
+                <button type="button" class="input-action" onclick="togglePasswordVis('reg-password-confirm', this)">👁️</button>
+              </div>
+            </div>
+            <div class="alert alert-info" style="font-size:0.8rem;">
+              <span>ℹ️</span>
+              <span>Use at least 8 characters including uppercase, lowercase, a number, and a symbol.</span>
+            </div>
+          </div>
+          <div class="flex gap-3 mt-6">
+            <button class="btn btn-secondary" onclick="goToStep(2)">← Back</button>
+            <button class="btn btn-primary flex-1" id="btn-step3-next" onclick="validateStep3()">Continue →</button>
+          </div>
+        </div>
+
+        <!-- Step 4: Consent + Submit -->
+        <div class="form-section" id="step-4">
+          <h2 class="heading-md mb-1">Biometric Consent</h2>
+          <p class="text-muted text-sm mb-5">Step 4 of 4 — Your consent is required by law before face data collection</p>
+
+          <div class="consent-box mb-5">
+            <h4>🛡️ What we collect &amp; how we use it</h4>
+            <ul>
+              <li><strong>What:</strong> 128-dimensional face embedding vectors (not your photo)</li>
+              <li><strong>Why:</strong> To verify your identity during login and monitor activity during sessions</li>
+              <li><strong>Where:</strong> Encrypted in our secure database, never shared with third parties</li>
+              <li><strong>How long:</strong> Until you delete your account or revoke consent from Settings</li>
+              <li><strong>Your rights:</strong> Request deletion anytime — Settings → Privacy → Delete Biometric Data</li>
+            </ul>
+          </div>
+
+          <div class="flex flex-col gap-3 mb-5">
+            <label class="form-checkbox-group">
+              <input type="checkbox" id="consent-biometric" class="form-checkbox" />
+              <span class="checkbox-label"><strong>I consent</strong> to the collection and use of my biometric face embedding data for identity verification as described above. <span class="text-danger">*</span></span>
+            </label>
+            <label class="form-checkbox-group">
+              <input type="checkbox" id="consent-monitor" class="form-checkbox" />
+              <span class="checkbox-label"><strong>I consent</strong> to the use of the live camera activity monitor during authenticated sessions. I understand I can pause it at any time. <span class="text-danger">*</span></span>
+            </label>
+            <label class="form-checkbox-group">
+              <input type="checkbox" id="consent-terms" class="form-checkbox" />
+              <span class="checkbox-label">I agree to the <a href="terms.html" target="_blank" class="text-accent" style="text-decoration:none;">Terms of Service</a> and <a href="privacy-policy.html" target="_blank" class="text-accent" style="text-decoration:none;">Privacy Policy</a>. <span class="text-danger">*</span></span>
+            </label>
+          </div>
+
+          <div id="reg-error" class="alert alert-danger mb-4 hidden"></div>
+
+          <div class="flex gap-3">
+            <button class="btn btn-secondary" onclick="goToStep(3)">← Back</button>
+            <button class="btn btn-primary flex-1" id="btn-submit" onclick="submitRegistration()">Create Account →</button>
+          </div>
+          <p class="text-muted text-xs text-center mt-4">No face capture on this step — that happens after email verification.</p>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="app/app.js"></script>
+  <script>
+    let currentStep = 1;
+    const TOTAL_STEPS = 4;
+
+    // Redirect if already logged in
+    document.addEventListener('DOMContentLoaded', () => { redirectIfAuthed(); });
+
+    // ── DOB → Age ─────────────────────────────────────────────
+    document.getElementById('reg-dob').addEventListener('change', function() {
+      const dob = new Date(this.value);
+      const today = new Date();
+      let age = today.getFullYear() - dob.getFullYear();
+      const m = today.getMonth() - dob.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) age--;
+      document.getElementById('reg-age').value = age > 0 ? age : '';
+    });
+
+    // ── Language chips ─────────────────────────────────────────
+    function toggleLang(el) { el.classList.toggle('selected'); }
+
+    function getSelectedLangs() {
+      return [...document.querySelectorAll('.lang-chip.selected')].map(c => c.dataset.lang);
+    }
+
+    // ── Password visibility ────────────────────────────────────
+    function togglePasswordVis(id, btn) {
+      const f = document.getElementById(id);
+      f.type = f.type === 'password' ? 'text' : 'password';
+      btn.textContent = f.type === 'password' ? '👁️' : '🙈';
+    }
+
+    function onPasswordInput(val) {
+      updateStrengthMeter(val, 'pwd-strength-bar', 'pwd-strength-text');
+    }
+
+    // ── Step navigation ────────────────────────────────────────
+    function goToStep(n) {
+      document.getElementById(`step-${currentStep}`).classList.remove('active');
+      document.getElementById(`step-ind-${currentStep}`).classList.remove('active');
+      if (n < currentStep) document.getElementById(`step-ind-${currentStep}`).classList.remove('completed');
+      else document.getElementById(`step-ind-${currentStep}`).classList.add('completed');
+      currentStep = n;
+      document.getElementById(`step-${currentStep}`).classList.add('active');
+      document.getElementById(`step-ind-${currentStep}`).classList.add('active');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // ── Validation ─────────────────────────────────────────────
+    function validateStep1() {
+      let ok = true;
+      const name = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const dob = document.getElementById('reg-dob').value;
+      const phone = document.getElementById('reg-phone').value.trim();
+
+      clearFieldError('reg-name'); clearFieldError('reg-email');
+      clearFieldError('reg-dob'); clearFieldError('reg-phone');
+
+      if (name.length < 2) { showFieldError('reg-name', 'Full name is required.'); ok = false; }
+      if (!Validators.email(email)) { showFieldError('reg-email', 'Enter a valid email address.'); ok = false; }
+      if (!dob) { showFieldError('reg-dob', 'Date of birth is required.'); ok = false; }
+      else {
+        const age = parseInt(document.getElementById('reg-age').value);
+        if (age < 10 || age > 80) { showFieldError('reg-dob', 'Please enter a valid date of birth.'); ok = false; }
+      }
+      if (!Validators.phone(phone)) { showFieldError('reg-phone', 'Enter a valid phone number.'); ok = false; }
+
+      if (!ok) return;
+
+      // Check duplicate email
+      if (UserStore.getByEmail(email)) {
+        showFieldError('reg-email', 'An account with this email already exists.');
+        showToast('Account exists', 'Try signing in instead.', 'warning');
+        return;
+      }
+      if (ok) { markFieldSuccess('reg-name'); markFieldSuccess('reg-email'); goToStep(2); }
+    }
+
+    function validateStep2() {
+      let ok = true;
+      const inst = document.getElementById('reg-institution').value.trim();
+      const dept = document.getElementById('reg-department').value.trim();
+      const roll = document.getElementById('reg-roll').value.trim();
+
+      clearFieldError('reg-institution'); clearFieldError('reg-department'); clearFieldError('reg-roll');
+
+      if (!inst) { showFieldError('reg-institution', 'Institution name is required.'); ok = false; }
+      if (!dept) { showFieldError('reg-department', 'Department is required.'); ok = false; }
+      if (!roll) { showFieldError('reg-roll', 'Roll/Register number is required.'); ok = false; }
+
+      if (ok) goToStep(3);
+    }
+
+    function validateStep3() {
+      const pwd = document.getElementById('reg-password').value;
+      const confirm = document.getElementById('reg-password-confirm').value;
+
+      clearFieldError('reg-password'); clearFieldError('reg-password-confirm');
+
+      const strength = Validators.passwordStrength(pwd);
+      if (pwd.length < 8) { showFieldError('reg-password', 'Password must be at least 8 characters.'); return; }
+      if (strength < 3) { showFieldError('reg-password', 'Password is too weak. Add uppercase, numbers, or symbols.'); return; }
+      if (pwd !== confirm) { showFieldError('reg-password-confirm', 'Passwords do not match.'); return; }
+
+      markFieldSuccess('reg-password'); markFieldSuccess('reg-password-confirm');
+      goToStep(4);
+    }
+
+    async function submitRegistration() {
+      const biometric = document.getElementById('consent-biometric').checked;
+      const monitor = document.getElementById('consent-monitor').checked;
+      const terms = document.getElementById('consent-terms').checked;
+      const errEl = document.getElementById('reg-error');
+
+      if (!biometric || !monitor || !terms) {
+        errEl.textContent = '⚠ All three consent checkboxes are required to proceed.';
+        errEl.classList.remove('hidden');
+        return;
+      }
+      errEl.classList.add('hidden');
+
+      setButtonLoading('btn-submit', true, 'Creating Account…');
+
+      const profileData = {
+        name: document.getElementById('reg-name').value.trim(),
+        email: document.getElementById('reg-email').value.trim(),
+        phone: document.getElementById('reg-phone').value.trim(),
+        dob: document.getElementById('reg-dob').value,
+        age: parseInt(document.getElementById('reg-age').value) || null,
+        gender: document.getElementById('reg-gender').value || null,
+        address: document.getElementById('reg-address').value.trim() || null,
+        institution: document.getElementById('reg-institution').value.trim(),
+        department: document.getElementById('reg-department').value.trim(),
+        rollNumber: document.getElementById('reg-roll').value.trim(),
+        languages: getSelectedLangs(),
+        biometricConsent: true,
+        biometricConsentAt: Date.now(),
+        monitorConsent: true,
+        emailVerified: false,
+        accountStatus: 'pending',
+        faceCredentials: null,
+        failedLoginAttempts: 0,
+        lockedUntil: null,
+      };
+
+      const passwordHash = await hashPassword(document.getElementById('reg-password').value);
+      profileData.passwordHash = passwordHash;
+
+      // Save as pending reg (face enrollment + OTP still needed)
+      PendingReg.save(profileData);
+
+      // Generate and send OTP
+      const tempUserId = generateId();
+      PendingReg.save({ ...profileData, tempId: tempUserId });
+      const otp = await OTPStore.create(tempUserId, 'registration');
+      simulateSendOTPEmail(profileData.email, otp, 'registration');
+
+      setTimeout(() => {
+        navigate(`otp.html?purpose=registration&tempId=${tempUserId}&email=${encodeURIComponent(profileData.email)}`);
+      }, 600);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms of Service — StudentAuth</title>
+  <meta name="description" content="StudentAuth Terms of Service." />
+  <link rel="stylesheet" href="app/styles.css" />
+  <style>
+    .legal-page { max-width: 780px; margin: 0 auto; padding: 60px 24px; }
+    .legal-page h1 { margin-bottom: 8px; }
+    .legal-page h2 { font-size: 1.2rem; margin: 32px 0 12px; color: var(--brand-primary-light); }
+    .legal-page p, .legal-page li { font-size: 0.9375rem; color: var(--text-secondary); line-height: 1.75; }
+    .legal-page ul { padding-left: 20px; margin: 8px 0; }
+    .legal-page ul li { margin-bottom: 6px; }
+    .effective-date { color: var(--text-muted); font-size: 0.875rem; margin-bottom: 32px; }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <a href="index.html" class="navbar-brand"><div class="brand-logo">🎓</div><span class="brand-name">Student<span>Auth</span></span></a>
+    <div class="flex gap-3">
+      <a href="login.html" class="btn btn-ghost btn-sm">Sign In</a>
+      <a href="register.html" class="btn btn-primary btn-sm">Register</a>
+    </div>
+  </nav>
+  <div class="legal-page">
+    <h1 class="heading-xl">Terms of Service</h1>
+    <p class="effective-date">Effective Date: September 15, 2026</p>
+
+    <h2>1. Acceptance</h2>
+    <p>By creating an account or using StudentAuth, you agree to these Terms. If you do not agree, do not use the service. These Terms are governed by applicable Indian law and, where applicable, GDPR.</p>
+
+    <h2>2. Service Description</h2>
+    <p>StudentAuth provides biometric identity verification and session activity monitoring for educational institutions. Features include: multi-factor authentication (password + face + OTP), session management, and presence monitoring.</p>
+
+    <h2>3. Eligibility</h2>
+    <ul>
+      <li>You must be at least 14 years old to use this service</li>
+      <li>You must be enrolled at a participating educational institution</li>
+      <li>You must provide accurate information during registration</li>
+    </ul>
+
+    <h2>4. Acceptable Use</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>Attempt to spoof face verification using photos, videos, or masks</li>
+      <li>Share your account credentials with any other person</li>
+      <li>Reverse-engineer, scrape, or attack the authentication systems</li>
+      <li>Register multiple accounts for the same identity</li>
+      <li>Use the service for any unlawful purpose</li>
+    </ul>
+
+    <h2>5. Biometric Data Consent</h2>
+    <p>By completing face enrollment you explicitly consent to the collection and processing of your biometric data as described in our <a href="privacy-policy.html" style="color:var(--brand-accent);">Privacy Policy</a>. Consent can be withdrawn at any time from Settings → Privacy, which will delete your biometric data and disable face-based login.</p>
+
+    <h2>6. Activity Monitoring</h2>
+    <p>The activity monitor widget operates under a separate consent that you provide during onboarding. The monitor:</p>
+    <ul>
+      <li>Classifies your presence state (Active / Idle / Drowsy) — it does <strong>not</strong> record or transmit video</li>
+      <li>Is always visibly indicated when active — no covert monitoring occurs</li>
+      <li>Can be paused at any time via the widget controls</li>
+      <li>Can be permanently disabled from Settings → Privacy</li>
+    </ul>
+    <p>If monitoring data is used to support attendance or assessment decisions, a human reviewer will assess any automated flags before they have consequences for you.</p>
+
+    <h2>7. Account Security</h2>
+    <ul>
+      <li>You are responsible for keeping your password and device secure</li>
+      <li>Report suspected unauthorized access immediately</li>
+      <li>We will never ask for your password via email or phone</li>
+    </ul>
+
+    <h2>8. Service Availability</h2>
+    <p>We aim for high availability but do not guarantee uninterrupted service. We provide an OTP-only fallback path if face verification is unavailable due to hardware or software issues.</p>
+
+    <h2>9. Limitation of Liability</h2>
+    <p>StudentAuth is not liable for indirect, incidental, or consequential damages arising from use or inability to use the service. Automated activity classifications are advisory only and do not create binding academic or disciplinary decisions without human review.</p>
+
+    <h2>10. Termination</h2>
+    <p>We may suspend or terminate accounts that violate these Terms. You may delete your account at any time from Settings → Privacy → Delete Account, which permanently removes all your data.</p>
+
+    <h2>11. Changes to Terms</h2>
+    <p>We will notify you by email of material changes to these Terms at least 30 days before they take effect. Continued use after the effective date constitutes acceptance.</p>
+
+    <h2>12. Contact</h2>
+    <p>For questions about these Terms: <strong>legal@studentauth.example</strong></p>
+
+    <div class="flex gap-3 mt-8">
+      <a href="index.html" class="btn btn-secondary">← Home</a>
+      <a href="privacy-policy.html" class="btn btn-ghost">Privacy Policy</a>
+    </div>
+  </div>
+  <div id="toast-container"></div>
+  <script src="app/app.js"></script>
+</body>
+</html>

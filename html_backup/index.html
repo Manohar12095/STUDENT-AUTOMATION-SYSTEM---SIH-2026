@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudentAuth — Secure Face-Verified Student Portal</title>
+  <meta name="description" content="A next-generation biometric student authentication system with face verification, OTP security, and live activity monitoring." />
+  <link rel="stylesheet" href="app/styles.css" />
+  <style>
+    /* ── Landing Page Specific ─── */
+    .hero { min-height: 92vh; display: flex; align-items: center; padding: 80px 0 60px; }
+    .hero-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; background: hsla(245, 85%, 60%, 0.12); border: 1px solid hsla(245, 85%, 60%, 0.25); border-radius: 99px; font-size: 0.8125rem; font-weight: 600; color: var(--brand-primary-light); margin-bottom: 24px; }
+    .hero-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand-accent); box-shadow: 0 0 8px var(--brand-accent); animation: recordBlink 2s ease-in-out infinite; }
+    .hero-desc { font-size: 1.0625rem; color: var(--text-secondary); line-height: 1.75; margin: 20px 0 36px; max-width: 480px; }
+    .hero-actions { display: flex; gap: 14px; flex-wrap: wrap; }
+    .hero-visual { position: relative; }
+    .hero-card-stack { position: relative; display: flex; justify-content: center; }
+    .demo-card { width: 300px; border-radius: 20px; padding: 24px; animation: cardFloat 6s ease-in-out infinite; }
+    .demo-card.back { position: absolute; top: -20px; left: -30px; opacity: 0.5; animation-delay: -2s; width: 260px; }
+    .demo-card.front { position: relative; z-index: 2; }
+    @keyframes cardFloat { 0%,100% { transform: translateY(0) rotate(-1deg); } 50% { transform: translateY(-14px) rotate(0deg); } }
+    .demo-avatar { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--brand-primary), var(--brand-accent)); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; margin-bottom: 14px; }
+    .demo-face-scan { width: 100%; aspect-ratio: 4/3; border-radius: 12px; background: var(--bg-base); border: 1px solid var(--border-default); display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; margin-top: 14px; }
+    .scan-line { position: absolute; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, transparent, var(--brand-accent), transparent); animation: scanAnim 2s ease-in-out infinite; }
+    @keyframes scanAnim { 0% { top: 10%; opacity: 0; } 20% { opacity: 1; } 80% { opacity: 1; } 100% { top: 90%; opacity: 0; } }
+    .scan-corners { position: absolute; inset: 12px; border: 2px solid transparent; }
+    .scan-corners::before, .scan-corners::after { content: ''; position: absolute; width: 20px; height: 20px; border-color: var(--brand-primary-light); border-style: solid; }
+    .scan-corners::before { top: 0; left: 0; border-width: 2px 0 0 2px; }
+    .scan-corners::after { bottom: 0; right: 0; border-width: 0 2px 2px 0; }
+    .scan-status { position: absolute; bottom: 10px; left: 10px; right: 10px; }
+
+    /* Stats bar */
+    .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1px; background: var(--border-subtle); border-radius: var(--radius-xl); overflow: hidden; margin: 80px 0; }
+    .stats-bar .stat-item { background: var(--bg-surface); }
+
+    /* Features */
+    .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .feature-card { padding: 28px; }
+    .feature-card .feature-icon { background: hsla(245, 85%, 60%, 0.1); border: 1px solid hsla(245, 85%, 60%, 0.2); }
+
+    /* Journey */
+    .journey-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px; position: relative; }
+    .journey-steps::before { content: ''; position: absolute; top: 28px; left: 10%; right: 10%; height: 2px; background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent)); }
+    .journey-step { text-align: center; padding-top: 8px; }
+    .journey-icon { width: 56px; height: 56px; border-radius: 50%; background: var(--bg-elevated); border: 2px solid var(--brand-primary); display: flex; align-items: center; justify-content: center; font-size: 1.4rem; margin: 0 auto 14px; position: relative; z-index: 1; box-shadow: 0 0 20px var(--brand-glow); }
+
+    /* CTA */
+    .cta-section { text-align: center; padding: 80px 0 60px; }
+    .cta-card { max-width: 640px; margin: 0 auto; padding: 56px 48px; }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border-subtle); padding: 32px 0; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-links { display: flex; gap: 20px; }
+    .footer-links a { color: var(--text-muted); text-decoration: none; font-size: 0.875rem; transition: color var(--transition-fast); }
+    .footer-links a:hover { color: var(--text-secondary); }
+
+    @media (max-width: 900px) {
+      .hero-grid { grid-template-columns: 1fr; }
+      .hero-visual { display: none; }
+      .features-grid { grid-template-columns: 1fr 1fr; }
+      .journey-steps { grid-template-columns: 1fr 1fr; }
+      .journey-steps::before { display: none; }
+      .stats-bar { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="index.html" class="navbar-brand" id="nav-brand">
+      <div class="brand-logo">🎓</div>
+      <span class="brand-name">Student<span>Auth</span></span>
+    </a>
+    <ul class="navbar-links" id="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="#features">Features</a></li>
+      <li><a href="privacy-policy.html">Privacy</a></li>
+      <li><a href="terms.html">Terms</a></li>
+    </ul>
+    <div class="flex gap-3" id="nav-actions">
+      <a href="login.html" class="btn btn-ghost btn-sm" id="btn-nav-login">Sign In</a>
+      <a href="register.html" class="btn btn-primary btn-sm" id="btn-nav-register">Get Started</a>
+    </div>
+  </nav>
+
+  <div class="page-container">
+    <!-- Hero -->
+    <section class="hero">
+      <div class="content-container">
+        <div class="hero-grid">
+          <div class="animate-in">
+            <div class="hero-badge">
+              <span class="dot"></span>
+              Biometric-Secured · AI-Powered
+            </div>
+            <h1 class="heading-display">Secure Student<br/>Identity Gateway</h1>
+            <p class="hero-desc">
+              A next-generation authentication portal combining face recognition, OTP verification, and real-time activity monitoring — built for modern educational institutions.
+            </p>
+            <div class="hero-actions">
+              <a href="register.html" class="btn btn-primary btn-lg" id="btn-hero-register">
+                🚀 Get Started Free
+              </a>
+              <a href="login.html" class="btn btn-secondary btn-lg" id="btn-hero-login">
+                Sign In →
+              </a>
+            </div>
+            <div class="flex gap-4 mt-5" style="flex-wrap:wrap;">
+              <span class="flex items-center gap-2 text-sm text-muted"><span>✅</span> No raw images stored</span>
+              <span class="flex items-center gap-2 text-sm text-muted"><span>🔒</span> End-to-end encrypted</span>
+              <span class="flex items-center gap-2 text-sm text-muted"><span>⚡</span> 3-step verification</span>
+            </div>
+          </div>
+
+          <div class="hero-visual animate-in animate-in-delay-2">
+            <div class="hero-card-stack">
+              <div class="demo-card card-glass back">
+                <div class="demo-avatar">👤</div>
+                <div class="text-sm font-semibold" style="margin-bottom:6px;">Priya Sharma</div>
+                <div class="text-xs text-muted">CSE Dept · Roll #2024001</div>
+                <div class="flex items-center gap-2 mt-3">
+                  <span class="badge badge-success">✓ Verified</span>
+                  <span class="badge badge-muted">Active</span>
+                </div>
+              </div>
+              <div class="demo-card card-glass front">
+                <div class="flex items-center justify-between mb-3">
+                  <span class="text-sm font-semibold">Face Verification</span>
+                  <span class="badge badge-primary">● LIVE</span>
+                </div>
+                <div class="demo-face-scan">
+                  <span style="font-size:3rem;">👤</span>
+                  <div class="scan-line"></div>
+                  <div class="scan-corners"></div>
+                  <div class="scan-status">
+                    <div class="badge badge-success" style="font-size:0.65rem;">✓ Face Matched · 94%</div>
+                  </div>
+                </div>
+                <div class="mt-3">
+                  <div class="flex items-center justify-between text-xs mb-2">
+                    <span class="text-muted">Match confidence</span>
+                    <span class="text-success font-semibold">94%</span>
+                  </div>
+                  <div class="strength-meter"><div class="strength-bar" style="width:94%;background:var(--color-success);"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats -->
+    <div class="content-container">
+      <div class="stats-bar animate-in animate-in-delay-1">
+        <div class="stat-item"><div class="stat-value">128D</div><div class="stat-label">Face embedding vectors</div></div>
+        <div class="stat-item"><div class="stat-value">4</div><div class="stat-label">Angle face capture</div></div>
+        <div class="stat-item"><div class="stat-value">10min</div><div class="stat-label">OTP expiry window</div></div>
+        <div class="stat-item"><div class="stat-value">100%</div><div class="stat-label">On-device processing</div></div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <section id="features" style="padding: 60px 0 80px;">
+      <div class="content-container">
+        <div class="text-center mb-8">
+          <span class="badge badge-primary mb-3">⚡ Features</span>
+          <h2 class="heading-xl">Everything you need for secure access</h2>
+          <p class="text-secondary mt-3" style="max-width:520px;margin:12px auto 0;">Engineered with enterprise-grade security and a user-first experience.</p>
+        </div>
+        <div class="features-grid">
+          <div class="feature-card card animate-in">
+            <div class="feature-icon">🤖</div>
+            <h3 class="heading-md mb-2">AI Face Verification</h3>
+            <p class="text-secondary text-sm">4-angle face capture with 128D embeddings. Cosine similarity matching with liveness detection prevents photo spoofing.</p>
+          </div>
+          <div class="feature-card card animate-in animate-in-delay-1">
+            <div class="feature-icon" style="background:hsla(185,100%,50%,0.1);border-color:hsla(185,100%,50%,0.2);">📧</div>
+            <h3 class="heading-md mb-2">Email OTP Security</h3>
+            <p class="text-secondary text-sm">Time-limited 6-digit OTPs with rate limiting, attempt tracking, and automatic cooldown after failed tries.</p>
+          </div>
+          <div class="feature-card card animate-in animate-in-delay-2">
+            <div class="feature-icon" style="background:hsla(142,76%,46%,0.1);border-color:hsla(142,76%,46%,0.2);">📊</div>
+            <h3 class="heading-md mb-2">Activity Monitor</h3>
+            <p class="text-secondary text-sm">Persistent live camera widget classifies presence states — Active, Idle, or Drowsy — with full consent controls.</p>
+          </div>
+          <div class="feature-card card animate-in">
+            <div class="feature-icon" style="background:hsla(270,70%,50%,0.1);border-color:hsla(270,70%,50%,0.2);">🔐</div>
+            <h3 class="heading-md mb-2">Multi-Step Auth</h3>
+            <p class="text-secondary text-sm">Three-layer verification: password → face match → OTP. Each layer independently blocks unauthorized access.</p>
+          </div>
+          <div class="feature-card card animate-in animate-in-delay-1">
+            <div class="feature-icon" style="background:hsla(38,95%,55%,0.1);border-color:hsla(38,95%,55%,0.2);">🛡️</div>
+            <h3 class="heading-md mb-2">Privacy-First Design</h3>
+            <p class="text-secondary text-sm">Embeddings, not raw images. Explicit consent. Data deletion rights. On-device processing keeps video off the server.</p>
+          </div>
+          <div class="feature-card card animate-in animate-in-delay-2">
+            <div class="feature-icon" style="background:hsla(0,84%,60%,0.1);border-color:hsla(0,84%,60%,0.2);">⚙️</div>
+            <h3 class="heading-md mb-2">Session Management</h3>
+            <p class="text-secondary text-sm">View active sessions, revoke access from anywhere, auto-expire sessions, and full login audit trail.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- User Journey -->
+    <section style="padding: 40px 0 80px;">
+      <div class="content-container">
+        <div class="text-center mb-8">
+          <span class="badge badge-primary mb-3">🗺️ Flow</span>
+          <h2 class="heading-xl">How it works</h2>
+        </div>
+        <div class="journey-steps">
+          <div class="journey-step animate-in">
+            <div class="journey-icon">📝</div>
+            <h4 class="font-semibold mb-1">Register</h4>
+            <p class="text-sm text-muted">Fill your profile with name, institution, department & contact details</p>
+          </div>
+          <div class="journey-step animate-in animate-in-delay-1">
+            <div class="journey-icon" style="border-color:var(--brand-accent);box-shadow:0 0 20px hsla(185,100%,50%,0.3);">📷</div>
+            <h4 class="font-semibold mb-1">Enroll Face</h4>
+            <p class="text-sm text-muted">4-angle guided capture generates secure embeddings stored encrypted</p>
+          </div>
+          <div class="journey-step animate-in animate-in-delay-2">
+            <div class="journey-icon" style="border-color:var(--color-success);box-shadow:0 0 20px hsla(142,76%,46%,0.3);">✉️</div>
+            <h4 class="font-semibold mb-1">Verify OTP</h4>
+            <p class="text-sm text-muted">Confirm your email with a time-limited, single-use code</p>
+          </div>
+          <div class="journey-step animate-in animate-in-delay-3">
+            <div class="journey-icon" style="border-color:var(--color-warning);box-shadow:0 0 20px hsla(38,95%,55%,0.3);">🎯</div>
+            <h4 class="font-semibold mb-1">Access Dashboard</h4>
+            <p class="text-sm text-muted">Your secure workspace with live monitoring and full privacy controls</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+      <div class="content-container">
+        <div class="cta-card card animate-in">
+          <span style="font-size:3rem;">🎓</span>
+          <h2 class="heading-xl mt-4 mb-3">Ready to get started?</h2>
+          <p class="text-secondary mb-6">Join thousands of students using secure biometric authentication. Set up in under 5 minutes.</p>
+          <div class="flex gap-3 justify-center flex-wrap">
+            <a href="register.html" class="btn btn-primary btn-lg" id="btn-cta-register">Create Account →</a>
+            <a href="login.html" class="btn btn-ghost btn-lg" id="btn-cta-login">Sign In</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <div class="content-container">
+        <div class="footer-inner">
+          <div class="navbar-brand" style="gap:10px;display:flex;align-items:center;">
+            <div class="brand-logo" style="width:28px;height:28px;font-size:0.8rem;">🎓</div>
+            <span class="brand-name" style="font-size:0.9rem;">Student<span>Auth</span></span>
+          </div>
+          <div class="footer-links">
+            <a href="privacy-policy.html">Privacy Policy</a>
+            <a href="terms.html">Terms of Service</a>
+            <a href="login.html">Sign In</a>
+            <a href="register.html">Register</a>
+          </div>
+          <span class="text-muted text-xs">© 2026 StudentAuth. All rights reserved.</span>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="app/app.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // If already logged in, update nav
+      if (SessionStore.isValid()) {
+        const actions = document.getElementById('nav-actions');
+        if (actions) actions.innerHTML = `<a href="dashboard.html" class="btn btn-primary btn-sm">Dashboard →</a>`;
+      }
+    });
+  </script>
+</body>
+</html>
